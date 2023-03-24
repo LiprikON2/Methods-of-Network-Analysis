@@ -68,6 +68,9 @@ const graphUsers = (users) => {
 
 const aGroupId = "ij_salt";
 const bGroupId = "itmem";
+// https://qna.habr.com/q/274430
+const aGroupOwnerId = "-204380239";
+const bGroupOwnerId = "-127149194";
 
 const fetchAndStoreGroupUsers = async (groupId, apiKey) => {
     let groupUsers = getSessionStorageData(groupId);
@@ -83,9 +86,12 @@ const bGroupUsers = await fetchAndStoreGroupUsers(bGroupId, api);
 console.log("aGroupUsers", aGroupUsers);
 console.log("bGroupUsers", bGroupUsers);
 
-const [nodes, edges] = graphUsers(aGroupUsers);
+const abGroupUsers = aGroupUsers.filter((user) => bGroupUsers.includes(user));
 
-console.log("nodes", nodes);
+console.log("abGroupUsers", abGroupUsers);
+
+// const [nodes, edges] = graphUsers(aGroupUsers);
+// console.log("nodes", nodes);
 
 // const cy = cytoscape({
 //     container: document.getElementById("cy"),
