@@ -1,13 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/main.js"></script>
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vite App</title>
+        <script src="https://vk.com/js/api/openapi.js?169" type="text/javascript"></script>
+        <style>
+            #cy {
+                height: 100%;
+                width: 100%;
+                position: absolute;
+                left: 0;
+                top: 200;
+            }
+            :root {
+                background-color: #332b00 !important;
+                position: relative;
+                z-index: 1000;
+            }
+            #data,
+            #output {
+                padding: 0.35rem;
+                padding-inline: 0.6rem;
+                margin: 0.35rem;
+                background-color: #453b0277;
+                border-radius: 5px;
+                position: absolute;
+            }
+
+            #data {
+                top: 0;
+                left: 0;
+            }
+
+            #output {
+                top: 0;
+                right: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="cy"></div>
+        <div id="root">
+            <div id="data"></div>
+            <div id="output"></div>
+        </div>
+        <script type="module" src="/main.js"></script>
+    </body>
 </html>
