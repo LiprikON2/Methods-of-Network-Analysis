@@ -1,6 +1,7 @@
 import apiJson from "./secrets/api.json";
 import cytoscape from "cytoscape";
 import spread from "cytoscape-spread";
+import Dexie from "dexie";
 
 import "./style.css";
 
@@ -13,6 +14,14 @@ const getSessionStorageData = (key) => {
 
 const setSessionStorageData = (key, value) => {
     sessionStorage.setItem(key, JSON.stringify(value));
+};
+
+const getLocalStorageData = (key) => {
+    return JSON.parse(localStorage.getItem(key));
+};
+
+const setLocalStorageData = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
 };
 
 const delayFetch = (url, options) =>
@@ -35,35 +44,21 @@ const fetchFromVk = async (method, params, apiKey, delay = 0) => {
         }
     );
 
-    if (!res.ok) throw new Error(res.statusText);
-    return { data: await res.json(), ok: res.ok };
+    const data = await res.json();
+    if ("error" in data) throw new Error(data.error.error_msg);
+    return data;
 };
 
-const getGroupUsers = async (groupId, apiKey, maxCount = 1000) => {
-    let users = [];
-    let targetCount = 1;
-    while (users.length < targetCount && users.length < maxCount) {
-        const { data, ok } = await fetchFromVk(
-            "groups.getMembers",
-            {
-                group_id: groupId,
-                offset: users.length,
-            },
-            apiKey,
-            1000
-        );
-        console.log("got data", data);
-        users = [...users, ...data.response.items];
-        targetCount = data.response.count;
+const fetchAllItems = async (callback, maxItemCount = 1000) => {
+    let items = [];
+    let targetItemCount = 1;
+    while (items.length < targetItemCount && items.length < maxItemCount) {
+        const data = await callback(items.length);
+        items = [...items, ...data.response.items];
+        targetItemCount = data.response.count;
     }
 
-    return users;
-};
-
-const graphUsers = (users) => {
-    const nodes = users.map((userId) => ({ data: { id: userId, label: "user" + userId } }));
-
-    return [nodes, []];
+    return items;
 };
 
 const aGroupId = "ij_salt";
@@ -72,24 +67,91 @@ const bGroupId = "itmem";
 const aGroupOwnerId = "-204380239";
 const bGroupOwnerId = "-127149194";
 
-const fetchAndStoreGroupUsers = async (groupId, apiKey) => {
-    let groupUsers = getSessionStorageData(groupId);
-    if (!groupUsers) {
-        groupUsers = await getGroupUsers(groupId, api, 100000);
-        setSessionStorageData(groupId, groupUsers);
+const fetchAndStoreData = async (dataKey, apiKey, callback) => {
+    let data = getSessionStorageData(dataKey);
+    if (!data) {
+        data = await callback();
+        setSessionStorageData(dataKey, data);
     }
-    return groupUsers;
+    return data;
 };
-const aGroupUsers = await fetchAndStoreGroupUsers(aGroupId, api);
-const bGroupUsers = await fetchAndStoreGroupUsers(bGroupId, api);
+
+// Сохраните списки участников выбранных сообществ.
+const aGroupUsers = await fetchAndStoreData(
+    aGroupId,
+    api,
+    async () =>
+        await fetchAllItems(
+            async (offset) =>
+                await fetchFromVk(
+                    "groups.getMembers",
+                    {
+                        group_id: aGroupId,
+                        offset,
+                    },
+                    api,
+                    1000
+                ),
+            100000
+        )
+);
+const bGroupUsers = await fetchAndStoreData(
+    bGroupId,
+    api,
+    async () =>
+        await fetchAllItems(
+            async (offset) =>
+                await fetchFromVk(
+                    "groups.getMembers",
+                    {
+                        group_id: bGroupId,
+                        offset,
+                    },
+                    api,
+                    1000
+                ),
+
+            100000
+        )
+);
 
 console.log("aGroupUsers", aGroupUsers);
 console.log("bGroupUsers", bGroupUsers);
 
+// Есть ли пользователи, относящиеся к обоим сообществам?
 const abGroupUsers = aGroupUsers.filter((user) => bGroupUsers.includes(user));
 
 console.log("abGroupUsers", abGroupUsers);
 
+// // Сохраните последние 2000 постов каждого из сообществ
+// const aGroupPosts = await fetchAndStoreData(
+//     aGroupOwnerId,
+//     api,
+//     async () =>
+//         await fetchAllItems(
+//             async (offset) =>
+//                 await fetchFromVk(
+//                     "wall.get",
+//                     {
+//                         owner_id: aGroupOwnerId,
+//                         count: 100,
+//                         offset,
+//                     },
+//                     api,
+//                     1000
+//                 ),
+//             2000
+//         )
+// );
+
+// console.log("aGroupPosts", aGroupPosts);
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++
+// const graphUsers = (users) => {
+//     const nodes = users.map((userId) => ({ data: { id: userId, label: "user" + userId } }));
+
+//     return [nodes, []];
+// };
 // const [nodes, edges] = graphUsers(aGroupUsers);
 // console.log("nodes", nodes);
 
