@@ -123,26 +123,41 @@ const abGroupUsers = aGroupUsers.filter((user) => bGroupUsers.includes(user));
 
 console.log("abGroupUsers", abGroupUsers);
 
-// // Сохраните последние 2000 постов каждого из сообществ
-// const aGroupPosts = await fetchAndStoreData(
-//     aGroupOwnerId,
-//     api,
-//     async () =>
-//         await fetchAllItems(
-//             async (offset) =>
-//                 await fetchFromVk(
-//                     "wall.get",
-//                     {
-//                         owner_id: aGroupOwnerId,
-//                         count: 100,
-//                         offset,
-//                     },
-//                     api,
-//                     1000
-//                 ),
-//             2000
-//         )
+// Сохраните последние 2000 постов каждого из сообществ
+
+// TODO: CHECK IN DB BEFORE FETCHING
+const aGroupPosts = [];
+// const aGroupPosts = await fetchAllItems(
+//     async (offset) =>
+//         await fetchFromVk(
+//             "wall.get",
+//             {
+//                 owner_id: aGroupOwnerId,
+//                 count: 100,
+//                 offset,
+//             },
+//             api,
+//             1000
+//         ),
+//     2000
 // );
+
+Dexie.delete("vkApiDb");
+const db = new Dexie("vkApiDb");
+db.version(1).stores({
+    groups: "id,ownerId,users,posts",
+});
+
+try {
+    await db.groups.add({
+        id: aGroupId,
+        ownerId: aGroupOwnerId,
+        users: aGroupUsers,
+        posts: aGroupPosts,
+    });
+} catch (error) {}
+
+console.log("db", await db.groups.toArray());
 
 // console.log("aGroupPosts", aGroupPosts);
 
