@@ -19,8 +19,7 @@
                 position: relative;
                 z-index: 1000;
             }
-            #data,
-            #output {
+            .panel {
                 padding: 0.35rem;
                 padding-inline: 0.6rem;
                 margin: 0.35rem;
@@ -29,12 +28,12 @@
                 position: absolute;
             }
 
-            #data {
+            #a-group {
                 top: 0;
                 left: 0;
             }
 
-            #output {
+            #b-group {
                 top: 0;
                 right: 0;
             }
@@ -43,8 +42,8 @@
     <body>
         <div id="cy"></div>
         <div id="root">
-            <div id="data"></div>
-            <div id="output"></div>
+            <div class="panel" id="a-group"></div>
+            <div class="panel" id="b-group"></div>
         </div>
         <script type="module" src="core/main.js"></script>
     </body>

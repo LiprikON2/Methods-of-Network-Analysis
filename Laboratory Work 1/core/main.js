@@ -136,13 +136,11 @@ console.log("bGroupTable", bGroupTable);
 // Используются ли в постах хэштеги? Если используются, то
 // составьте топ хэштегов по встречаемости для каждой группы,
 // визуализируйте полученные результаты. Сравните списки на предмет пересечений.
-
 const getPostsHashtags = (posts) => {
     const hashtags = {};
 
     posts.forEach((post) => {
-        // Example output: ["#foo", "#bar", "#baz"]
-        // const postHashtags = post.text.split(" ").filter((v) => v.startsWith("#"));
+        // Example output: ["#foo", "#bar", "#baz", "#привет"]
         const postHashtags = post.text.match(/#[\w|а-яА-Я]+(?=\s|$)/g);
         if (postHashtags) {
             postHashtags.forEach((postHashtag) =>
@@ -160,6 +158,17 @@ const bGroupHashtags = getPostsHashtags(bGroupTable.posts);
 
 console.log("aGroupHashtags", aGroupHashtags, aGroupHashtags[Object.keys(aGroupHashtags)[0]]);
 console.log("bGroupHashtags", bGroupHashtags, bGroupHashtags[Object.keys(bGroupHashtags)[0]]);
+
+const displayTopHashtags = (hashtags, top = 5) => {
+    console.log("hashtags", hashtags);
+    const topHashtags = Object.entries(hashtags).slice(0, top);
+
+    return `\
+        <ol>
+            ${topHashtags.map(([key, value]) => `<li>${key}: ${value}</li>`).join("")}
+        </ol>
+    `;
+};
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++
 // const graphUsers = (users) => {
@@ -218,10 +227,12 @@ console.log("bGroupHashtags", bGroupHashtags, bGroupHashtags[Object.keys(bGroupH
 // const layout = cy.makeLayout({ name: "spread", prelayout: false, padding: 20 });
 // layout.run();
 
-// document.getElementById("data").innerText = `\
-// Hmm
-// `;
+document.getElementById("a-group").innerHTML = `\
+<span>"A" Group - Top 5 hashtags</span>
+${displayTopHashtags(aGroupHashtags)}
+`;
 
-// document.getElementById("output").innerText = `\
-// Later
-// `;
+document.getElementById("b-group").innerHTML = `\
+<span>"B" Group - Top 5 hashtags</span>
+${displayTopHashtags(bGroupHashtags)}
+`;
