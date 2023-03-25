@@ -37,6 +37,12 @@
                 top: 0;
                 right: 0;
             }
+            #chart {
+                bottom: 0;
+                left: 0;
+                min-width: 32rem;
+                min-height: 10rem;
+            }
         </style>
     </head>
     <body>
@@ -44,6 +50,9 @@
         <div id="root">
             <div class="panel" id="a-group"></div>
             <div class="panel" id="b-group"></div>
+            <div class="panel" id="chart">
+                <canvas id="chart-canvas"></canvas>
+            </div>
         </div>
         <script type="module" src="core/main.js"></script>
     </body>

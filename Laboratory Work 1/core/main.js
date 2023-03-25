@@ -2,6 +2,7 @@ import apiJson from "../secrets/api.json";
 import cytoscape from "cytoscape";
 import spread from "cytoscape-spread";
 import Dexie from "dexie";
+import Chart from "chart.js/auto";
 
 import { fetchFromVk, fetchAllItems, fetchAndStoreData, sortPropertiesByValue } from "./utils";
 import "../style.css";
@@ -160,7 +161,6 @@ console.log("aGroupHashtags", aGroupHashtags, aGroupHashtags[Object.keys(aGroupH
 console.log("bGroupHashtags", bGroupHashtags, bGroupHashtags[Object.keys(bGroupHashtags)[0]]);
 
 const displayTopHashtags = (hashtags, top = 5) => {
-    console.log("hashtags", hashtags);
     const topHashtags = Object.entries(hashtags).slice(0, top);
 
     return `\
@@ -169,6 +169,83 @@ const displayTopHashtags = (hashtags, top = 5) => {
         </ol>
     `;
 };
+
+document.getElementById("a-group").innerHTML = `\
+<span>"A" Group - Top 5 hashtags</span>
+${displayTopHashtags(aGroupHashtags)}
+`;
+
+document.getElementById("b-group").innerHTML = `\
+<span>"B" Group - Top 5 hashtags</span>
+${displayTopHashtags(bGroupHashtags)}
+`;
+
+// Посчитайте количество постов за каждый час суток для обоих сообществ, визуализируйте результаты.
+// В какое время суток наиболее активны участники социальных групп?
+// Совпадают ли часы с наибольшей активностью для обоих сообществ?
+
+const groupByHour = (posts) => {
+    const hours = Array.from(Array(24).keys());
+    // {0: 0, 1: 0:, ..., 23: 0}
+    const postsByHourCount = hours.reduce((a, v) => ({ ...a, [v]: 0 }), {});
+
+    posts.forEach((post) => {
+        const postDate = new Date(post.date * 1000);
+        const postHour = postDate.getHours();
+        postsByHourCount[postHour] += 1;
+    });
+    return postsByHourCount;
+};
+
+const aGroupPostsByHour = groupByHour(aGroupTable.posts);
+const bGroupPostsByHour = groupByHour(bGroupTable.posts);
+
+console.log("aGroupPostsByHour", aGroupPostsByHour);
+console.log("bGroupPostsByHour", bGroupPostsByHour);
+
+console.log("test", Object.values(aGroupPostsByHour));
+
+const groupHoursChart = document.getElementById("chart-canvas");
+
+const chartData = {
+    labels: Object.keys(aGroupPostsByHour),
+    datasets: [
+        {
+            label: '"A" Group Posts',
+            data: Object.values(aGroupPostsByHour),
+            borderWidth: 1,
+            backgroundColor: "#4bc0c0",
+        },
+        {
+            label: '"B" Group Posts',
+            data: Object.values(bGroupPostsByHour),
+            backgroundColor: "#ff6384",
+        },
+    ],
+};
+
+const chart = new Chart(groupHoursChart, {
+    type: "bar",
+    data: chartData,
+    options: {
+        plugins: {
+            title: {
+                display: true,
+                text: "Posts per hour",
+            },
+        },
+        responsive: true,
+        // maintainAspectRatio: false,
+        scales: {
+            x: {
+                stacked: true,
+            },
+            y: {
+                stacked: true,
+            },
+        },
+    },
+});
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++
 // const graphUsers = (users) => {
@@ -226,13 +303,3 @@ const displayTopHashtags = (hashtags, top = 5) => {
 
 // const layout = cy.makeLayout({ name: "spread", prelayout: false, padding: 20 });
 // layout.run();
-
-document.getElementById("a-group").innerHTML = `\
-<span>"A" Group - Top 5 hashtags</span>
-${displayTopHashtags(aGroupHashtags)}
-`;
-
-document.getElementById("b-group").innerHTML = `\
-<span>"B" Group - Top 5 hashtags</span>
-${displayTopHashtags(bGroupHashtags)}
-`;
