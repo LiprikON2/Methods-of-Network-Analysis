@@ -1,80 +1,19 @@
-import apiJson from "./secrets/api.json";
+import apiJson from "../secrets/api.json";
 import cytoscape from "cytoscape";
 import spread from "cytoscape-spread";
 import Dexie from "dexie";
 
-import "./style.css";
+import { fetchFromVk, fetchAllItems, fetchAndStoreData, sortPropertiesByValue } from "./utils";
+import "../style.css";
 
 spread(cytoscape);
 const { api } = apiJson;
-
-const getSessionStorageData = (key) => {
-    return JSON.parse(sessionStorage.getItem(key));
-};
-
-const setSessionStorageData = (key, value) => {
-    sessionStorage.setItem(key, JSON.stringify(value));
-};
-
-const getLocalStorageData = (key) => {
-    return JSON.parse(localStorage.getItem(key));
-};
-
-const setLocalStorageData = (key, value) => {
-    localStorage.setItem(key, JSON.stringify(value));
-};
-
-const delayFetch = (url, options) =>
-    new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(fetch(url, options));
-        }, options.delay);
-    });
-
-const fetchFromVk = async (method, params, apiKey, delay = 0) => {
-    params = { ...params, v: "5.131" };
-    const res = await delayFetch(
-        `http://localhost:8010/proxy/method/${method}?` + new URLSearchParams(params),
-        {
-            delay,
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-            },
-        }
-    );
-
-    const data = await res.json();
-    if ("error" in data) throw new Error(data.error.error_msg);
-    return data;
-};
-
-const fetchAllItems = async (callback, maxItemCount = 1000) => {
-    let items = [];
-    let targetItemCount = 1;
-    while (items.length < targetItemCount && items.length < maxItemCount) {
-        const data = await callback(items.length);
-        items = [...items, ...data.response.items];
-        targetItemCount = data.response.count;
-    }
-
-    return items;
-};
 
 const aGroupId = "ij_salt";
 const bGroupId = "itmem";
 // https://qna.habr.com/q/274430
 const aGroupOwnerId = "-204380239";
 const bGroupOwnerId = "-127149194";
-
-const fetchAndStoreData = async (dataKey, apiKey, callback) => {
-    let data = getSessionStorageData(dataKey);
-    if (!data) {
-        data = await callback();
-        setSessionStorageData(dataKey, data);
-    }
-    return data;
-};
 
 // Сохраните списки участников выбранных сообществ.
 const aGroupUsers = await fetchAndStoreData(
@@ -124,25 +63,7 @@ const abGroupUsers = aGroupUsers.filter((user) => bGroupUsers.includes(user));
 console.log("abGroupUsers", abGroupUsers);
 
 // Сохраните последние 2000 постов каждого из сообществ
-
-// TODO: CHECK IN DB BEFORE FETCHING
-const aGroupPosts = [];
-// const aGroupPosts = await fetchAllItems(
-//     async (offset) =>
-//         await fetchFromVk(
-//             "wall.get",
-//             {
-//                 owner_id: aGroupOwnerId,
-//                 count: 100,
-//                 offset,
-//             },
-//             api,
-//             1000
-//         ),
-//     2000
-// );
-
-Dexie.delete("vkApiDb");
+// Dexie.delete("vkApiDb");
 const db = new Dexie("vkApiDb");
 db.version(1).stores({
     groups: "id,ownerId,users,posts",
@@ -153,13 +74,92 @@ try {
         id: aGroupId,
         ownerId: aGroupOwnerId,
         users: aGroupUsers,
-        posts: aGroupPosts,
+        posts: [],
     });
 } catch (error) {}
 
-console.log("db", await db.groups.toArray());
+try {
+    await db.groups.add({
+        id: bGroupId,
+        ownerId: bGroupOwnerId,
+        users: bGroupUsers,
+        posts: [],
+    });
+} catch (error) {}
 
-// console.log("aGroupPosts", aGroupPosts);
+let aGroupTable = await db.groups.get({ id: aGroupId });
+let bGroupTable = await db.groups.get({ id: bGroupId });
+
+if (!aGroupTable.posts.length) {
+    console.log("refetching posts...");
+    const aGroupPosts = await fetchAllItems(
+        async (offset) =>
+            await fetchFromVk(
+                "wall.get",
+                {
+                    owner_id: aGroupOwnerId,
+                    count: 100,
+                    offset,
+                },
+                api,
+                1000
+            ),
+        2000
+    );
+    db.groups.update(aGroupId, { posts: aGroupPosts });
+    aGroupTable = await db.groups.get({ id: aGroupId });
+}
+
+if (!bGroupTable.posts.length) {
+    console.log("refetching posts...");
+    const bGroupPosts = await fetchAllItems(
+        async (offset) =>
+            await fetchFromVk(
+                "wall.get",
+                {
+                    owner_id: bGroupOwnerId,
+                    count: 100,
+                    offset,
+                },
+                api,
+                1000
+            ),
+        2000
+    );
+    db.groups.update(bGroupId, { posts: bGroupPosts });
+    bGroupTable = await db.groups.get({ id: bGroupId });
+}
+
+console.log("aGroupTable", aGroupTable);
+console.log("bGroupTable", bGroupTable);
+
+// Используются ли в постах хэштеги? Если используются, то
+// составьте топ хэштегов по встречаемости для каждой группы,
+// визуализируйте полученные результаты. Сравните списки на предмет пересечений.
+
+const getPostsHashtags = (posts) => {
+    const hashtags = {};
+
+    posts.forEach((post) => {
+        // Example output: ["#foo", "#bar", "#baz"]
+        // const postHashtags = post.text.split(" ").filter((v) => v.startsWith("#"));
+        const postHashtags = post.text.match(/#[\w|а-яА-Я]+(?=\s|$)/g);
+        if (postHashtags) {
+            postHashtags.forEach((postHashtag) =>
+                !(postHashtag in hashtags)
+                    ? (hashtags[postHashtag] = 1)
+                    : (hashtags[postHashtag] += 1)
+            );
+        }
+    });
+    return sortPropertiesByValue(hashtags);
+};
+
+const aGroupHashtags = getPostsHashtags(aGroupTable.posts);
+const bGroupHashtags = getPostsHashtags(bGroupTable.posts);
+
+console.log("aGroupHashtags", aGroupHashtags, aGroupHashtags[Object.keys(aGroupHashtags)[0]]);
+console.log("bGroupHashtags", bGroupHashtags, bGroupHashtags[Object.keys(bGroupHashtags)[0]]);
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++
 // const graphUsers = (users) => {
