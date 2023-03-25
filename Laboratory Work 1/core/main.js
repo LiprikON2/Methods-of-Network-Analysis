@@ -235,7 +235,6 @@ const chart = new Chart(groupHoursChart, {
             },
         },
         responsive: true,
-        // maintainAspectRatio: false,
         scales: {
             x: {
                 stacked: true,

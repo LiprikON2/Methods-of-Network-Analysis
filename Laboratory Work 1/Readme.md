@@ -38,10 +38,21 @@ Owner ID: -127149194
 
 ![](https://i.imgur.com/qCHTC92.png)
 
+[Релевантный сниппет](core/main.js#L19)
+
+![](https://i.imgur.com/G6YYm6H.png)
+
+Функции `fetchAndStoreData`, `fetchAllItems`, `fetchFromVk` определены в [core/utils.js](core/utils.js)
+
+
 #### Пересечение 
 > 131 участника
 
 ![](https://i.imgur.com/zTZZXjE.png)
+
+[Релевантный сниппет](core/main.js#L61)
+
+![](https://i.imgur.com/EWh1W7r.png)
 
 
 ### 3. Сохраните последние 2000 постов каждого из сообществ
@@ -66,13 +77,13 @@ Owner ID: -127149194
 
 ![](https://i.imgur.com/fhFr2hZ.png)
 
+[Релевантный сниппет](core/main.js#L91)
+
+![](https://i.imgur.com/J82fROV.png)
+
 #### Экстракция хештегов
 
-Regex сниппет:
-```js
-// Example output: ["#foo", "#bar", "#baz", "#привет"]
-const postHashtags = post.text.match(/#[\w|а-яА-Я]+(?=\s|$)/g);
-```
+
 
 "A" group hashtags
 
@@ -81,6 +92,10 @@ const postHashtags = post.text.match(/#[\w|а-яА-Я]+(?=\s|$)/g);
 "B" group hashtags
 
 ![](https://i.imgur.com/D230JHJ.png)
+
+[Релевантный сниппет](core/main.js#L137)
+
+![](https://i.imgur.com/9SlziGt.png)
 
 Так как пересечений нет, визуализировать особо нечего
 
@@ -97,6 +112,10 @@ const postHashtags = post.text.match(/#[\w|а-яА-Я]+(?=\s|$)/g);
 У обеих групп с 10:00 до 23:00 поддерживается максимальный уровень активности
 
 Однако у группы "A" активность дольше держится в районе максимума: дополнительно в 9:00, и в 00:00; когда как у группы "B" активность в это время уже падает наполовину
+
+[Релевантный сниппет](core/main.js#L183)
+
+![](https://i.imgur.com/PUqlpl8.png)
 
 ### 5. Постройте социальные графы для обоих сообществ
 > - Если во 2 пункте пересечений не было обнаружено, постройте 2 отдельных графа
