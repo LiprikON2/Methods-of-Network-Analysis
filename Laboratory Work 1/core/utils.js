@@ -51,7 +51,7 @@ export const fetchAllItems = async (callback, maxItemCount = 1000) => {
     return items;
 };
 
-export const fetchAndStoreData = async (dataKey, apiKey, callback) => {
+export const fetchAndStoreData = async (dataKey, callback) => {
     let data = getSessionStorageData(dataKey);
     if (!data) {
         console.log("Refetching data...");

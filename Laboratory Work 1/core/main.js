@@ -19,7 +19,6 @@ const bGroupOwnerId = "-127149194";
 // Сохраните списки участников выбранных сообществ.
 const aGroupUsers = await fetchAndStoreData(
     aGroupId,
-    api,
     async () =>
         await fetchAllItems(
             async (offset) =>
@@ -37,7 +36,6 @@ const aGroupUsers = await fetchAndStoreData(
 );
 const bGroupUsers = await fetchAndStoreData(
     bGroupId,
-    api,
     async () =>
         await fetchAllItems(
             async (offset) =>
@@ -203,8 +201,6 @@ const bGroupPostsByHour = groupByHour(bGroupTable.posts);
 console.log("aGroupPostsByHour", aGroupPostsByHour);
 console.log("bGroupPostsByHour", bGroupPostsByHour);
 
-console.log("test", Object.values(aGroupPostsByHour));
-
 const groupHoursChart = document.getElementById("chart-canvas");
 
 const chartData = {
@@ -246,59 +242,100 @@ const chart = new Chart(groupHoursChart, {
     },
 });
 
-// +++++++++++++++++++++++++++++++++++++++++++++++++
-// const graphUsers = (users) => {
-//     const nodes = users.map((userId) => ({ data: { id: userId, label: "user" + userId } }));
+// Постройте социальные графы для обоих сообществ.
+const makeNodes = (users, prefix = "") => {
+    const nodes = users.map((userId) => ({
+        data: { id: prefix + userId, label: prefix + "User" + userId, vkId: userId, prefix },
+    }));
 
-//     return [nodes, []];
-// };
-// const [nodes, edges] = graphUsers(aGroupUsers);
-// console.log("nodes", nodes);
+    return nodes;
+};
+const aGroupNodes = makeNodes(aGroupUsers, "a");
+const bGroupNodes = makeNodes(bGroupUsers, "b");
 
-// const cy = cytoscape({
-//     container: document.getElementById("cy"),
-//     minZoom: 0.9,
-//     maxZoom: 5,
-//     style: [
-//         {
-//             selector: "node",
-//             style: {
-//                 "background-color": "#c9732c",
+console.log("aGroupNodes", aGroupNodes);
+console.log("bGroupNodes", bGroupNodes);
 
-//                 label: "data(label)",
-//                 color: "white",
-//                 "font-size": "0.6em",
-//                 "text-outline-width": "1.5px",
-//                 "text-outline-color": "black",
-//             },
-//         },
-//         {
-//             selector: "edge",
-//             style: {
-//                 width: 3,
-//                 "line-color": "#f2ab1b",
-//                 "target-arrow-color": "#f2ab1b",
-//                 "curve-style": "bezier",
-//                 content: "data(label)",
-//                 color: "#cccccc",
-//                 "font-size": "0.75em",
-//                 "text-outline-width": "1px",
-//                 "text-outline-color": "black",
-//             },
-//         },
-//         {
-//             selector: "edge[?marked]",
-//             style: {
-//                 "line-color": "#e8eacd",
-//                 width: 5,
-//             },
-//         },
-//     ],
-//     elements: {
-//         nodes,
-//         edges,
-//     },
-// });
+const connectNodes = (aNodes, bNodes, byKey = "", keyValues = []) => {
+    let edges = aNodes.map((aNode) => {
+        if (keyValues.includes(aNode.data[byKey])) {
+            const bNode = bNodes.find((bNode) => bNode.data[byKey] === aNode.data[byKey]);
+            return {
+                data: {
+                    id: aNode.data.id + "―" + bNode.data.id,
+                    label: aNode.data.id + "―" + bNode.data.id,
+                    source: aNode.data.id,
+                    target: bNode.data.id,
+                },
+            };
+        }
+    });
+    // remove undefined
+    edges = edges.filter((edge) => typeof edge !== "undefined");
 
-// const layout = cy.makeLayout({ name: "spread", prelayout: false, padding: 20 });
-// layout.run();
+    return edges;
+};
+
+const edges = connectNodes(aGroupNodes, bGroupNodes, "vkId", abGroupUsers);
+
+console.log("edges", edges);
+
+const cy = cytoscape({
+    container: document.getElementById("cy"),
+    style: [
+        {
+            selector: "node[prefix='a']",
+            style: {
+                "background-color": "#4bc0c0",
+
+                label: "data(label)",
+                color: "white",
+                "font-size": "0.6em",
+                "text-outline-width": "1.5px",
+                "text-outline-color": "black",
+            },
+        },
+        {
+            selector: "node[prefix='b']",
+            style: {
+                "background-color": "#ff6384",
+
+                label: "data(label)",
+                color: "white",
+                "font-size": "0.6em",
+                "text-outline-width": "1.5px",
+                "text-outline-color": "black",
+            },
+        },
+        {
+            selector: "edge",
+            style: {
+                width: 3,
+                "line-color": "#f2ab1b",
+                "target-arrow-color": "#f2ab1b",
+                "curve-style": "bezier",
+                content: "data(label)",
+                color: "#cccccc",
+                "font-size": "0.75em",
+                "text-outline-width": "1px",
+                "text-outline-color": "black",
+            },
+        },
+        {
+            selector: "edge[?marked]",
+            style: {
+                "line-color": "#e8eacd",
+                width: 5,
+            },
+        },
+    ],
+    elements: {
+        nodes: [...aGroupNodes.slice(0, 100), ...bGroupNodes.slice(0, 100)],
+        edges: [],
+        // nodes: [...aGroupNodes, ...bGroupNodes],
+        // edges,
+    },
+});
+
+const layout = cy.makeLayout({ name: "spread", prelayout: false, padding: 20 });
+layout.run();
