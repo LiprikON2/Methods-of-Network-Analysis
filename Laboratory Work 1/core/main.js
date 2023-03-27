@@ -464,7 +464,7 @@ const defaultOptions = {
     // - "draft" only applies spectral layout
     // - "default" improves the quality with incremental layout (fast cooling rate)
     // - "proof" improves the quality with incremental layout (slow cooling rate)
-    quality: "default",
+    quality: "draft",
     // Use random node positions at beginning of layout
     // if this is set to false, then quality option must be "proof"
     randomize: true,
@@ -497,7 +497,8 @@ const defaultOptions = {
     // Separation amount between nodes
     nodeSeparation: 75,
     // Power iteration tolerance
-    piTol: 0.0000001,
+    // piTol: 0.0000001,
+    piTol: 0.001,
 
     /* incremental layout options */
 
@@ -552,5 +553,5 @@ const defaultOptions = {
     ready: () => {}, // on layoutready
     stop: () => {}, // on layoutstop
 };
-// const layout = cy.makeLayout({ name: "fcose" });
-// layout.run();
+const layout = cy.makeLayout({ name: "fcose" });
+layout.run();
