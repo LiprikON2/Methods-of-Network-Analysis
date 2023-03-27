@@ -35,7 +35,8 @@ export const fetchFromVk = async (method, params, apiKey, delay = 0) => {
     );
 
     const data = await res.json();
-    if ("error" in data) throw new Error(data.error.error_msg);
+    if ("error" in data && ![30, 18].includes(data?.error?.error_code))
+        console.log("Error", data.error);
     return data;
 };
 
