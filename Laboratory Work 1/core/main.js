@@ -6,12 +6,18 @@ import Chart from "chart.js/auto";
 import cola from "cytoscape-cola";
 import fcose from "cytoscape-fcose";
 
-import { fetchFromVk, fetchAllItems, fetchAndStoreData, sortPropertiesByValue } from "./utils";
+import {
+    fetchFromVk,
+    fetchAllItems,
+    fetchAndStoreData,
+    sortPropertiesByValue,
+    colorArray,
+} from "./utils";
 import "../style.css";
 
-// cytoscape.use(fcose);
-// cytoscape.use(cola);
-// spread(cytoscape);
+cytoscape.use(fcose);
+cytoscape.use(cola);
+spread(cytoscape);
 
 const { api } = apiJson;
 
@@ -304,7 +310,6 @@ const makeNodes = (users, prefix = "") => {
             label: prefix + "User" + userId,
             vkId: userId,
             prefix,
-            weight: Math.random(),
         },
     }));
 
@@ -352,16 +357,25 @@ const connectGroupFriends = (userFriends, prefix = "") => {
 
 // fix for stale data: filter out users that left the group
 const aGroupUserFriends = Object.fromEntries(
-    Object.entries(aGroupTable.users)
-        .filter(([user]) => aGroupUsers.includes(parseInt(user)))
-        .slice(0, 500)
+    Object.entries(aGroupTable.users).filter(([user]) => aGroupUsers.includes(parseInt(user)))
 );
 const bGroupUserFriends = Object.fromEntries(
-    Object.entries(bGroupTable.users).filter(([user]) => bGroupUsers.includes(parseInt(user)))
+    Object.entries(bGroupTable.users)
+        .filter(([user]) => bGroupUsers.includes(parseInt(user)))
+        .slice(0, 1600)
 );
 
 const aGroupEdges = connectGroupFriends(aGroupUserFriends, "a");
-const bGroupEdges = connectGroupFriends(bGroupUserFriends, "b");
+let bGroupEdges = connectGroupFriends(bGroupUserFriends, "b");
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b32652825"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b93101084"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b93121292"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b54747605"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b54740370"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b66062640"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b66146804"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b58620352"));
+bGroupEdges = bGroupEdges.filter((edge) => !edge.data.id.includes("b58647718"));
 
 console.log("aGroupEdges", aGroupEdges);
 console.log("bGroupEdges", bGroupEdges);
@@ -422,6 +436,7 @@ const cy = cytoscape({
             selector: "edge",
             style: {
                 width: 0.075,
+                // width: 0.5,
                 "line-color": "#f2ab1b",
                 "curve-style": "haystack",
                 color: "#cccccc",
@@ -440,166 +455,66 @@ const cy = cytoscape({
         },
     ],
     elements: {
-        // nodes: [...aGroupNodes, ...bGroupNodes],
-        nodes: [...aGroupNodes.slice(0, 500)],
-        edges: aGroupEdges,
-        // nodes: [...bGroupNodes],
-        // edges: bGroupEdges,
+        nodes: [...bGroupNodes.slice(0, 1600)],
+        edges: bGroupEdges,
+        // nodes: [...aGroupNodes],
+        // edges: aGroupEdges,
     },
 });
 
-// const layoutConfig = {
-//     animate: true, // Whether to show the layout as it's running
-//     ready: undefined, // Callback on layoutready
-//     stop: undefined, // Callback on layoutstop
-//     fit: true, // Reset viewport to fit default simulationBounds
-//     minDist: 20, // Minimum distance between nodes
-//     padding: 20, // Padding
-//     expandingFactor: -1.0, // If the network does not satisfy the minDist
-//     // criterium then it expands the network of this amount
-//     // If it is set to -1.0 the amount of expansion is automatically
-//     // calculated based on the minDist, the aspect ratio and the
-//     // number of nodes
-//     prelayout: false,
-//     maxExpandIterations: 4, // Maximum number of expanding iterations
-//     boundingBox: undefined, // Constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
-//     randomize: false, // Uses random initial node positions on true
-// };
+const layout1 = cy.makeLayout({ name: "fcose", animate: false });
+const layout2 = cy.makeLayout({ name: "spread", prelayout: false, animate: false });
 
-// const layout = cy.makeLayout({ name: "spread", ...layoutConfig });
-// layout.run();
+const run = (l) => {
+    const p = l.promiseOn("layoutstop");
 
-const defaultOptions = {
-    // 'draft', 'default' or 'proof'
-    // - "draft" only applies spectral layout
-    // - "default" improves the quality with incremental layout (fast cooling rate)
-    // - "proof" improves the quality with incremental layout (slow cooling rate)
-    quality: "draft",
-    // Use random node positions at beginning of layout
-    // if this is set to false, then quality option must be "proof"
-    randomize: true,
-    // Whether or not to animate the layout
-    animate: false,
-    // Duration of animation in ms, if enabled
-    animationDuration: 1000,
-    // Easing of animation, if enabled
-    animationEasing: undefined,
-    // Fit the viewport to the repositioned nodes
-    fit: true,
-    // Padding around layout
-    padding: 30,
-    // Whether to include labels in node dimensions. Valid in "proof" quality
-    nodeDimensionsIncludeLabels: false,
-    // Whether or not simple nodes (non-compound nodes) are of uniform dimensions
-    uniformNodeDimensions: false,
-    // Whether to pack disconnected components - cytoscape-layout-utilities extension should be registered and initialized
-    packComponents: true,
-    // Layout step - all, transformed, enforced, cose - for debug purpose only
-    step: "all",
+    l.run();
 
-    /* spectral layout options */
-
-    // False for random, true for greedy sampling
-    samplingType: true,
-    // Sample size to construct distance matrix
-    // sampleSize: 25,
-    sampleSize: 5,
-    // Separation amount between nodes
-    nodeSeparation: 75,
-    // Power iteration tolerance
-    // piTol: 0.0000001,
-    piTol: 0.001,
-
-    /* incremental layout options */
-
-    // Node repulsion (non overlapping) multiplier
-    nodeRepulsion: (node) => 4500,
-    // Ideal edge (non nested) length
-    idealEdgeLength: (edge) => 50,
-    // Divisor to compute edge forces
-    edgeElasticity: (edge) => 0.45,
-    // Nesting factor (multiplier) to compute ideal edge length for nested edges
-    nestingFactor: 0.1,
-    // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
-    // numIter: 2500,
-    numIter: 1,
-    // For enabling tiling
-    tile: true,
-    // The comparison function to be used while sorting nodes during tiling operation.
-    // Takes the ids of 2 nodes that will be compared as a parameter and the default tiling operation is performed when this option is not set.
-    // It works similar to ``compareFunction`` parameter of ``Array.prototype.sort()``
-    // If node1 is less then node2 by some ordering criterion ``tilingCompareBy(nodeId1, nodeId2)`` must return a negative value
-    // If node1 is greater then node2 by some ordering criterion ``tilingCompareBy(nodeId1, nodeId2)`` must return a positive value
-    // If node1 is equal to node2 by some ordering criterion ``tilingCompareBy(nodeId1, nodeId2)`` must return 0
-    tilingCompareBy: undefined,
-    // Represents the amount of the vertical space to put between the zero degree members during the tiling operation(can also be a function)
-    tilingPaddingVertical: 10,
-    // Represents the amount of the horizontal space to put between the zero degree members during the tiling operation(can also be a function)
-    tilingPaddingHorizontal: 10,
-    // Gravity force (constant)
-    gravity: 0.25,
-    // Gravity range (constant) for compounds
-    gravityRangeCompound: 1.5,
-    // Gravity force (constant) for compounds
-    gravityCompound: 1.0,
-    // Gravity range (constant)
-    gravityRange: 3.8,
-    // Initial cooling factor for incremental layout
-    initialEnergyOnIncremental: 0.3,
-
-    /* constraint options */
-
-    // Fix desired nodes to predefined positions
-    // [{nodeId: 'n1', position: {x: 100, y: 200}}, {...}]
-    fixedNodeConstraint: undefined,
-    // Align desired nodes in vertical/horizontal direction
-    // {vertical: [['n1', 'n2'], [...]], horizontal: [['n2', 'n4'], [...]]}
-    alignmentConstraint: undefined,
-    // Place two nodes relatively in vertical/horizontal direction
-    // [{top: 'n1', bottom: 'n2', gap: 100}, {left: 'n3', right: 'n4', gap: 75}, {...}]
-    relativePlacementConstraint: undefined,
-
-    /* layout event callbacks */
-    ready: () => {}, // on layoutready
-    stop: () => {}, // on layoutstop
+    return p;
 };
 
-// var clusters = cy.elements().markovClustering({
-//     attributes: [
-//         function (edge) {
-//             return edge.data("weight");
-//         },
-//     ],
-// });
+Promise.resolve()
+    .then(() => {
+        return run(layout1);
+    })
+    .then(() => {
+        return run(layout2);
+    })
+    .then(() => {
+        console.log("Clustering...");
+        const ccn = cy.elements().closenessCentralityNormalized();
+        cy.nodes().forEach((n) => {
+            n.data({
+                closeness: ccn.closeness(n),
+            });
+        });
 
-// var clusters = cy.elements().kMeans({
-//     k: 2,
-//     attributes: [
-//         function (edge) {
-//             return edge.data("weight");
-//         },
-//     ],
-// });
+        let clusters = cy.elements().kMeans({
+            k: 50,
+            attributes: [(node) => node.data("closeness")],
+        });
+        // Filter out empty collections
+        clusters = clusters.filter((cluster) => cluster.size() >= 3);
+        console.log("clusters", clusters);
 
-var clusters = cy.elements().ap({
-    attributes: [
-        function (node) {
-            return node.data("weight");
-        },
-    ],
-    distance: "euclidean",
-    damping: 0.8,
-    preference: "median",
-    minIterations: 100,
-    maxIterations: 1000,
-});
+        // Assign random color to each cluster
+        clusters.forEach((cluster) => {
+            const newClusterSize = cluster.size();
+            const randomColor = colorArray[Math.floor(Math.random() * colorArray.length)];
 
-console.log("clusters", clusters);
+            cluster.forEach((elem) => {
+                if (elem.data("clusterSize") !== undefined) {
+                    // todo: fix never true
+                    const { clusterSize } = elem.data();
 
-// Assign random colors to each cluster
-for (var c = 0; c < clusters.length; c++) {
-    clusters[c].style("background-color", "#" + Math.floor(Math.random() * 16777215).toString(16));
-}
-
-// const layout = cy.makeLayout({ name: "fcose" });
-// layout.run();
+                    if (clusterSize < newClusterSize) {
+                        elem.data({ clusterSize: newClusterSize });
+                        elem.style("background-color", randomColor);
+                    }
+                } else {
+                    elem.data({ clusterSize: newClusterSize });
+                    elem.style("background-color", randomColor);
+                }
+            });
+        });
+    });
