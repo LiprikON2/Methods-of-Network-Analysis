@@ -9,9 +9,9 @@ import fcose from "cytoscape-fcose";
 import { fetchFromVk, fetchAllItems, fetchAndStoreData, sortPropertiesByValue } from "./utils";
 import "../style.css";
 
-cytoscape.use(fcose);
-cytoscape.use(cola);
-spread(cytoscape);
+// cytoscape.use(fcose);
+// cytoscape.use(cola);
+// spread(cytoscape);
 
 const { api } = apiJson;
 
@@ -248,7 +248,7 @@ const chart = new Chart(groupHoursChart, {
 });
 
 // Постройте социальные графы для обоих сообществ.
-const aGroupUsersSubset = aGroupUsers.slice(0, 10);
+const aGroupUsersSubset = aGroupUsers.slice(0, 5000);
 const bGroupUsersSubset = bGroupUsers.slice(0, 5000);
 
 const getUserFriends = async (userId, apiKey) => {
@@ -299,7 +299,13 @@ console.log("bGroupTable", bGroupTable);
 
 const makeNodes = (users, prefix = "") => {
     const nodes = users.map((userId) => ({
-        data: { id: prefix + userId, label: prefix + "User" + userId, vkId: userId, prefix },
+        data: {
+            id: prefix + userId,
+            label: prefix + "User" + userId,
+            vkId: userId,
+            prefix,
+            weight: Math.random(),
+        },
     }));
 
     return nodes;
@@ -346,7 +352,9 @@ const connectGroupFriends = (userFriends, prefix = "") => {
 
 // fix for stale data: filter out users that left the group
 const aGroupUserFriends = Object.fromEntries(
-    Object.entries(aGroupTable.users).filter(([user]) => aGroupUsers.includes(parseInt(user)))
+    Object.entries(aGroupTable.users)
+        .filter(([user]) => aGroupUsers.includes(parseInt(user)))
+        .slice(0, 500)
 );
 const bGroupUserFriends = Object.fromEntries(
     Object.entries(bGroupTable.users).filter(([user]) => bGroupUsers.includes(parseInt(user)))
@@ -433,8 +441,10 @@ const cy = cytoscape({
     ],
     elements: {
         // nodes: [...aGroupNodes, ...bGroupNodes],
-        nodes: [...bGroupNodes],
-        edges: bGroupEdges,
+        nodes: [...aGroupNodes.slice(0, 500)],
+        edges: aGroupEdges,
+        // nodes: [...bGroupNodes],
+        // edges: bGroupEdges,
     },
 });
 
@@ -553,5 +563,43 @@ const defaultOptions = {
     ready: () => {}, // on layoutready
     stop: () => {}, // on layoutstop
 };
-const layout = cy.makeLayout({ name: "fcose" });
-layout.run();
+
+// var clusters = cy.elements().markovClustering({
+//     attributes: [
+//         function (edge) {
+//             return edge.data("weight");
+//         },
+//     ],
+// });
+
+// var clusters = cy.elements().kMeans({
+//     k: 2,
+//     attributes: [
+//         function (edge) {
+//             return edge.data("weight");
+//         },
+//     ],
+// });
+
+var clusters = cy.elements().ap({
+    attributes: [
+        function (node) {
+            return node.data("weight");
+        },
+    ],
+    distance: "euclidean",
+    damping: 0.8,
+    preference: "median",
+    minIterations: 100,
+    maxIterations: 1000,
+});
+
+console.log("clusters", clusters);
+
+// Assign random colors to each cluster
+for (var c = 0; c < clusters.length; c++) {
+    clusters[c].style("background-color", "#" + Math.floor(Math.random() * 16777215).toString(16));
+}
+
+// const layout = cy.makeLayout({ name: "fcose" });
+// layout.run();
