@@ -38,7 +38,7 @@ Owner ID: -127149194
 
 ![](https://i.imgur.com/qCHTC92.png)
 
-[Релевантный сниппет](core/main.js#L19)
+[Релевантный сниппет](core/main.js#L30)
 
 ![](https://i.imgur.com/G6YYm6H.png)
 
@@ -50,7 +50,7 @@ Owner ID: -127149194
 
 ![](https://i.imgur.com/zTZZXjE.png)
 
-[Релевантный сниппет](core/main.js#L61)
+[Релевантный сниппет](core/main.js#L71)
 
 ![](https://i.imgur.com/EWh1W7r.png)
 
@@ -77,7 +77,7 @@ Owner ID: -127149194
 
 ![](https://i.imgur.com/fhFr2hZ.png)
 
-[Релевантный сниппет](core/main.js#L91)
+[Релевантный сниппет](core/main.js#L100)
 
 ![](https://i.imgur.com/J82fROV.png)
 
@@ -93,7 +93,7 @@ Owner ID: -127149194
 
 ![](https://i.imgur.com/D230JHJ.png)
 
-[Релевантный сниппет](core/main.js#L137)
+[Релевантный сниппет](core/main.js#L146)
 
 ![](https://i.imgur.com/9SlziGt.png)
 
@@ -113,7 +113,7 @@ Owner ID: -127149194
 
 Однако у группы "A" активность дольше держится в районе максимума: дополнительно в 9:00, и в 00:00; когда как у группы "B" активность в это время уже падает наполовину
 
-[Релевантный сниппет](core/main.js#L183)
+[Релевантный сниппет](core/main.js#L192)
 
 ![](https://i.imgur.com/PUqlpl8.png)
 
@@ -145,7 +145,7 @@ Owner ID: -127149194
 ![](https://i.imgur.com/MOBPlv9.jpeg)
 
 
-[Релевантный сниппет](core/main.js#L250)
+[Релевантный сниппет](core/main.js#L306)
 
 ![](https://i.imgur.com/ohWX0t0.png)
 
