@@ -58,6 +58,8 @@ console.log("bGroupTable", bGroupTable);
 
 const bGroupUsersSubset = bGroupTable.groupUsers.slice(0, 1600);
 
+console.log("bGroupUsersSubset", bGroupUsersSubset);
+
 const getUserFriends = async (userId, apiKey) => {
     const data = await fetchFromVk(
         "friends.get",
@@ -145,7 +147,9 @@ const connectGroupFriends = (userFriends, prefix = "") => {
 };
 
 const bGroupUserFriends = Object.fromEntries(
-    Object.entries(bGroupTable.users).filter(([user]) => bGroupUsers.includes(parseInt(user)))
+    Object.entries(bGroupTable.users).filter(([user]) =>
+        bGroupTable.groupUsers.includes(parseInt(user))
+    )
 );
 
 let bGroupEdges = connectGroupFriends(bGroupUserFriends, "b");
