@@ -104,11 +104,11 @@ $\delta(G)=0$
 
 Средняя степень нод:
 
-$d_{avg}(G)\approx1.5$
+$d_{avg}(G)\approx6$
 
 <br/>
 
-![](https://i.imgur.com/JjsKDsB.png)
+![](https://i.imgur.com/vmY4qKL.png)
 
 
 [Релевантный сниппет](./core/main.js#L309)
@@ -136,7 +136,7 @@ $d_{avg}(G)\approx1.5$
 
 
 [Релевантный сниппет](./core/main.js#L280)
-![](https://i.imgur.com/FzWxxNO.png)
+![](https://i.imgur.com/jQvVcOr.png)
 
 
 #### Источники
