@@ -194,6 +194,20 @@ const cy = cytoscape({
                 "text-outline-width": "0.25 ",
             },
         },
+        {
+            selector: "node[[degree > 140]]",
+            style: {
+                shape: "star",
+                "z-index": 1000,
+                height: 20,
+                width: 20,
+                "font-size": "0.2em",
+
+                "background-color": "white",
+                "text-outline-color": "black",
+                "text-outline-width": "0.25 ",
+            },
+        },
         // {
         //     selector: "node[closeness]",
         //     style: {
@@ -241,12 +255,12 @@ const run = (l) => {
 };
 
 Promise.resolve()
-    .then(() => {
-        return run(layout1);
-    })
-    .then(() => {
-        return run(layout2);
-    })
+    // .then(() => {
+    //     return run(layout1);
+    // })
+    // .then(() => {
+    //     return run(layout2);
+    // })
     .then(() => {
         console.log("Clustering...");
         const ccn = cy.elements().closenessCentralityNormalized();
@@ -285,3 +299,12 @@ Promise.resolve()
             });
         });
     });
+
+const minNodeDegree = cy.elements().minDegree();
+console.log("minNodeDegree", minNodeDegree);
+
+const maxNodeDegree = cy.elements().maxDegree();
+console.log("maxNodeDegree", maxNodeDegree);
+
+const avgNodeDegree = cy.elements().totalDegree() / cy.elements().length;
+console.log("avgNodeDegree", avgNodeDegree);
