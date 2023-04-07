@@ -307,13 +307,13 @@ Promise.resolve()
     });
 
 // Рассчитайте максимальное, минимальное и среднее значение степени нодов графа
-const minNodeDegree = cy.elements().minDegree();
+const minNodeDegree = cy.nodes().minDegree();
 console.log("minNodeDegree", minNodeDegree);
 
-const maxNodeDegree = cy.elements().maxDegree();
+const maxNodeDegree = cy.nodes().maxDegree();
 console.log("maxNodeDegree", maxNodeDegree);
 
-const avgNodeDegree = cy.elements().totalDegree() / cy.elements().length;
+const avgNodeDegree = cy.nodes().totalDegree() / cy.nodes().length;
 console.log("avgNodeDegree", avgNodeDegree);
 
 // Рассчитайте модулярность графа
