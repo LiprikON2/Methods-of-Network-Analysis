@@ -253,14 +253,13 @@ const run = (l) => {
 
     return p;
 };
-
 Promise.resolve()
-    // .then(() => {
-    //     return run(layout1);
-    // })
-    // .then(() => {
-    //     return run(layout2);
-    // })
+    .then(() => {
+        return run(layout1);
+    })
+    .then(() => {
+        return run(layout2);
+    })
     .then(() => {
         console.log("Clustering...");
         const ccn = cy.elements().closenessCentralityNormalized();
@@ -278,47 +277,36 @@ Promise.resolve()
         clusters = clusters.filter((cluster) => cluster.size() >= 3);
         console.log("clusters", clusters);
 
-        // Assign random color to each cluster
-        clusters.forEach((cluster) => {
-            const newClusterSize = cluster.size();
-            const randomColor = colorArray[Math.floor(Math.random() * colorArray.length)];
-
-            cluster.forEach((elem) => {
-                if (elem.data("clusterSize") !== undefined) {
-                    // todo: fix never true
-                    const { clusterSize } = elem.data();
-
-                    if (clusterSize < newClusterSize) {
-                        elem.data({ clusterSize: newClusterSize });
-                        elem.style("background-color", randomColor);
-                    }
-                } else {
-                    elem.data({ clusterSize: newClusterSize });
-                    elem.style("background-color", randomColor);
-                }
-            });
-        });
-
         // Рассчитайте модулярность графа
         const nodes = cy.nodes().map((node) => node.data("id"));
         const edges = cy.edges().map((edge) => ({
             source: edge.data("source"),
             target: edge.data("target"),
-            weight: 1,
+            // weight: edge.source().data("closeness"),
+            weight: edge.source().degree(),
         }));
 
         console.log("nodes", nodes);
         console.log("edges", edges);
 
-        const community = jLouvain().nodes(bGroupUsersSubset).edges(edges)();
+        // https://stackoverflow.com/a/49898854
+        const community = jLouvain().nodes(nodes).edges(edges)();
         console.log("community", community);
-        const { modularity } = community;
+        const { communities, modularity } = community;
 
         console.log("modularity", modularity);
+
+        // Assign random colors to each community
+        Object.entries(communities).forEach(([nodeId, communityId]) => {
+            const communityColor = colorArray[communityId % colorArray.length];
+            const node = cy.nodes(`[id="${nodeId}"]`);
+            if (node.degree() > 1) {
+                node.style("background-color", communityColor);
+            }
+        });
     });
 
 // Рассчитайте максимальное, минимальное и среднее значение степени нодов графа
-
 const minNodeDegree = cy.elements().minDegree();
 console.log("minNodeDegree", minNodeDegree);
 
