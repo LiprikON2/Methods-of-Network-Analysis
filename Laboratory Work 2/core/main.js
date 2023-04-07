@@ -298,7 +298,26 @@ Promise.resolve()
                 }
             });
         });
+
+        // Рассчитайте модулярность графа
+        const nodes = cy.nodes().map((node) => node.data("id"));
+        const edges = cy.edges().map((edge) => ({
+            source: edge.data("source"),
+            target: edge.data("target"),
+            weight: 1,
+        }));
+
+        console.log("nodes", nodes);
+        console.log("edges", edges);
+
+        const community = jLouvain().nodes(bGroupUsersSubset).edges(edges)();
+        console.log("community", community);
+        const { modularity } = community;
+
+        console.log("modularity", modularity);
     });
+
+// Рассчитайте максимальное, минимальное и среднее значение степени нодов графа
 
 const minNodeDegree = cy.elements().minDegree();
 console.log("minNodeDegree", minNodeDegree);
@@ -308,3 +327,16 @@ console.log("maxNodeDegree", maxNodeDegree);
 
 const avgNodeDegree = cy.elements().totalDegree() / cy.elements().length;
 console.log("avgNodeDegree", avgNodeDegree);
+
+// Рассчитайте модулярность графа
+// var node_data = ["id1", "id2", "id3"]; // any type of string can be used as id
+// var edge_data = [
+//     { source: "id1", target: "id2", weight: 10.0 },
+//     { source: "id2", target: "id3", weight: 20.0 },
+//     { source: "id3", target: "id1", weight: 30.0 },
+// ];
+// const community = jLouvain().nodes(node_data).edges(edge_data)();
+// console.log("community", community);
+// const { modularity } = community;
+
+// console.log("modularity", modularity);
