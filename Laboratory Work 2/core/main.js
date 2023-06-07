@@ -229,11 +229,12 @@ const cy = cytoscape({
                 // content: "data(label)",
             },
         },
+
         {
-            selector: "edge[?marked]",
+            selector: "edge.marked",
             style: {
-                "line-color": "#e8eacd",
-                width: 0.15,
+                width: 0.3,
+                "line-color": "white",
             },
         },
     ],
@@ -304,6 +305,12 @@ Promise.resolve()
                 node.style("background-color", communityColor);
             }
         });
+
+        const mainEdges = cy.edges().filter((edge) => {
+            return edge.target().data("closeness") > 0.85 || edge.target().data("degree ") > 140;
+        });
+        mainEdges.addClass("marked");
+        console.log("mainEdges", mainEdges.length, mainEdges);
     });
 
 // Рассчитайте максимальное, минимальное и среднее значение степени нодов графа
