@@ -10,3 +10,4 @@
 - [Laboratory Work 2](Laboratory%20Work%202)
 - [Laboratory Work 3](Laboratory%20Work%203)
 - [Laboratory Work 4](Laboratory%20Work%204)
+- [Laboratory Work 5](Laboratory%20Work%205)
