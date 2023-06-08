@@ -182,3 +182,23 @@ Owner ID: -127149194
 Группа "B" (обрезанно до 1600 пользователей), при k=50 получилось 24 кластеров (из более 2-х элементов)
 
 ![](https://i.imgur.com/4Oev7a5.png)
+
+
+## Getting VK API key
+
+1. Make sure that app is enabled at [dev.vk.com - My Apps - Settings - App status](https://vk.com/editapp?id=51591070&section=options)
+2. Run following snippet in Browser console:
+
+```js
+window.open("https://oauth.vk.com/authorize?client_id=51591070&display=page&redirect_uri=http://127.0.0.1:5173&scope=1026&response_type=token&v=5.131&state=123456");
+```
+
+3. Copy api key from url in newly opened tab. 
+   - It starts just after `...access_token=` 
+   - It ends just before `&expires_in=86400...`
+4. Put key into `secrets/api.json` like this:
+```js
+{
+    "api": "vk1.a.seAyNJUtqjJhVcvMMWk6NDO7ACF5YoNS-JzPAqAYN9wcybnDkrMpC_dvIkjx7hlSlfSxebtioYIRsovyi-aQXjoNytBwR14TB37HXJijDhzRXXE6SPG-g4wnwHXxDAic-ncCZ-DnVsyjaZOEEtxaqz7x0hwXMxkgJB0yYhMDwBqpLlwFt8HhsZ9guMG_zQwCM5m4_Z3SKXgV1fmpqv-6pQ"
+}
+```

@@ -26,14 +26,14 @@ db.version(1).stores({
     groups: "id,ownerId,groupUsers,users",
 });
 
-// try {
-//     await db.groups.add({
-//         id: aGroupId,
-//         ownerId: aGroupOwnerId,
-//         groupUsers: [],
-//         users: [],
-//     });
-// } catch (error) {}
+try {
+    await db.groups.add({
+        id: aGroupId,
+        ownerId: aGroupOwnerId,
+        groupUsers: [],
+        users: [],
+    });
+} catch (error) {}
 
 try {
     await db.groups.add({
@@ -44,10 +44,33 @@ try {
     });
 } catch (error) {}
 
+let aGroupTable = await db.groups.get({ id: aGroupId });
 let bGroupTable = await db.groups.get({ id: bGroupId });
 
+if (!aGroupTable.groupUsers.length) {
+    console.log("refetching 'a' group users...");
+
+    const aGroupUsers = await fetchAllItems(
+        async (offset) =>
+            await fetchFromVk(
+                "groups.getMembers",
+                {
+                    group_id: aGroupId,
+                    offset,
+                },
+                api,
+                1000
+            ),
+        100000
+    );
+
+    db.groups.update(aGroupId, { groupUsers: aGroupUsers });
+    aGroupTable = await db.groups.get({ id: aGroupId });
+}
+console.log("aGroupTable", aGroupTable);
+
 if (!bGroupTable.groupUsers.length) {
-    console.log("refetching group users...");
+    console.log("refetching 'b' group users...");
 
     const bGroupUsers = await fetchAllItems(
         async (offset) =>
@@ -68,8 +91,10 @@ if (!bGroupTable.groupUsers.length) {
 }
 console.log("bGroupTable", bGroupTable);
 
-const bGroupUsersSubset = bGroupTable.groupUsers.slice(0, 1600);
+const aGroupUsersSubset = aGroupTable.groupUsers.slice(0, 5000);
+console.log("aGroupUsersSubset", aGroupUsersSubset);
 
+const bGroupUsersSubset = bGroupTable.groupUsers.slice(0, 1600);
 console.log("bGroupUsersSubset", bGroupUsersSubset);
 
 const getUserFriends = async (userId, apiKey) => {
@@ -96,8 +121,17 @@ const getFriends = async (userIds, apiKey) => {
     return usersFriends;
 };
 
+// Deleting data from db
+// db.groups.update(aGroupId, { groupUsers: [], users: {} });
 // db.groups.update(bGroupId, { users: {} });
 
+if (!Object.keys(aGroupTable.users).length) {
+    console.log("refetching user friends...");
+    const aGroupUsersFriends = await getFriends(aGroupUsersSubset, api);
+
+    db.groups.update(aGroupId, { users: aGroupUsersFriends });
+    aGroupTable = await db.groups.get({ id: aGroupId });
+}
 if (!Object.keys(bGroupTable.users).length) {
     console.log("refetching user friends...");
     const bGroupUsersFriends = await getFriends(bGroupUsersSubset, api);
@@ -106,6 +140,7 @@ if (!Object.keys(bGroupTable.users).length) {
     bGroupTable = await db.groups.get({ id: bGroupId });
 }
 
+console.log("aGroupTable", aGroupTable);
 console.log("bGroupTable", bGroupTable);
 
 const makeNodes = (users, prefix = "") => {
@@ -120,8 +155,10 @@ const makeNodes = (users, prefix = "") => {
 
     return nodes;
 };
-const bGroupNodes = makeNodes(bGroupUsersSubset, "b");
+const aGroupNodes = makeNodes(aGroupUsersSubset, "a");
+console.log("aGroupNodes", aGroupNodes);
 
+const bGroupNodes = makeNodes(bGroupUsersSubset, "b");
 console.log("bGroupNodes", bGroupNodes);
 
 const connectGroupFriends = (userFriends, prefix = "") => {
@@ -158,14 +195,21 @@ const connectGroupFriends = (userFriends, prefix = "") => {
     return edges;
 };
 
+const aGroupUserFriends = Object.fromEntries(
+    Object.entries(aGroupTable.users).filter(([user]) =>
+        aGroupTable.groupUsers.includes(parseInt(user))
+    )
+);
 const bGroupUserFriends = Object.fromEntries(
     Object.entries(bGroupTable.users).filter(([user]) =>
         bGroupTable.groupUsers.includes(parseInt(user))
     )
 );
 
-let bGroupEdges = connectGroupFriends(bGroupUserFriends, "b");
+let aGroupEdges = connectGroupFriends(aGroupUserFriends, "a");
+console.log("aGroupEdges", aGroupEdges);
 
+let bGroupEdges = connectGroupFriends(bGroupUserFriends, "b");
 console.log("bGroupEdges", bGroupEdges);
 
 const cy = cytoscape({
@@ -251,8 +295,10 @@ const cy = cytoscape({
         },
     ],
     elements: {
-        nodes: [...bGroupNodes.slice(0, 1600)],
-        edges: bGroupEdges,
+        nodes: [...aGroupNodes],
+        edges: aGroupEdges,
+        // nodes: [...bGroupNodes],
+        // edges: bGroupEdges,
     },
 });
 
