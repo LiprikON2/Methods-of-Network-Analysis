@@ -4,6 +4,7 @@ import spread from "cytoscape-spread";
 import Dexie from "dexie";
 import cola from "cytoscape-cola";
 import fcose from "cytoscape-fcose";
+import Chart from "chart.js/auto";
 
 import { fetchFromVk, fetchAllItems, colorArray } from "./utils";
 import "../style.css";
@@ -14,14 +15,25 @@ spread(cytoscape);
 
 const { api } = apiJson;
 
+const aGroupId = "ij_salt";
 const bGroupId = "itmem";
 // https://qna.habr.com/q/274430
+const aGroupOwnerId = "-204380239";
 const bGroupOwnerId = "-127149194";
 
 const db = new Dexie("vkApiDb");
 db.version(1).stores({
     groups: "id,ownerId,groupUsers,users",
 });
+
+// try {
+//     await db.groups.add({
+//         id: aGroupId,
+//         ownerId: aGroupOwnerId,
+//         groupUsers: [],
+//         users: [],
+//     });
+// } catch (error) {}
 
 try {
     await db.groups.add({
@@ -244,75 +256,6 @@ const cy = cytoscape({
     },
 });
 
-const layout1 = cy.makeLayout({ name: "fcose", animate: false });
-const layout2 = cy.makeLayout({ name: "spread", prelayout: false, animate: false });
-
-const run = (l) => {
-    const p = l.promiseOn("layoutstop");
-
-    l.run();
-
-    return p;
-};
-Promise.resolve()
-    .then(() => {
-        return run(layout1);
-    })
-    .then(() => {
-        return run(layout2);
-    })
-    .then(() => {
-        console.log("Clustering...");
-        const ccn = cy.elements().closenessCentralityNormalized();
-        cy.nodes().forEach((n) => {
-            n.data({
-                closeness: ccn.closeness(n),
-            });
-        });
-
-        let clusters = cy.elements().kMeans({
-            k: 50,
-            attributes: [(node) => node.data("closeness")],
-        });
-        // Filter out empty collections
-        clusters = clusters.filter((cluster) => cluster.size() >= 3);
-        console.log("clusters", clusters);
-
-        // Рассчитайте модулярность графа
-        const nodes = cy.nodes().map((node) => node.data("id"));
-        const edges = cy.edges().map((edge) => ({
-            source: edge.data("source"),
-            target: edge.data("target"),
-            // weight: edge.source().data("closeness"),
-            weight: edge.source().degree(),
-        }));
-
-        console.log("nodes", nodes);
-        console.log("edges", edges);
-
-        // https://stackoverflow.com/a/49898854
-        const community = jLouvain().nodes(nodes).edges(edges)();
-        console.log("community", community);
-        const { communities, modularity } = community;
-
-        console.log("modularity", modularity);
-
-        // Assign random colors to each community
-        Object.entries(communities).forEach(([nodeId, communityId]) => {
-            const communityColor = colorArray[communityId % colorArray.length];
-            const node = cy.nodes(`[id="${nodeId}"]`);
-            if (node.degree() > 1) {
-                node.style("background-color", communityColor);
-            }
-        });
-
-        const mainEdges = cy.edges().filter((edge) => {
-            return edge.target().data("closeness") > 0.85 || edge.target().data("degree ") > 140;
-        });
-        mainEdges.addClass("marked");
-        console.log("mainEdges", mainEdges.length, mainEdges);
-    });
-
 // Рассчитайте максимальное, минимальное и среднее значение степени нодов графа
 const minNodeDegree = cy.nodes().minDegree();
 console.log("minNodeDegree", minNodeDegree);
@@ -323,15 +266,141 @@ console.log("maxNodeDegree", maxNodeDegree);
 const avgNodeDegree = cy.nodes().totalDegree() / cy.nodes().length;
 console.log("avgNodeDegree", avgNodeDegree);
 
-// Рассчитайте модулярность графа
-// var node_data = ["id1", "id2", "id3"]; // any type of string can be used as id
-// var edge_data = [
-//     { source: "id1", target: "id2", weight: 10.0 },
-//     { source: "id2", target: "id3", weight: 20.0 },
-//     { source: "id3", target: "id1", weight: 30.0 },
-// ];
-// const community = jLouvain().nodes(node_data).edges(edge_data)();
-// console.log("community", community);
-// const { modularity } = community;
+const degreeDistributionFn = (cy, k) => {
+    const n_k = cy.nodes().filter((node) => {
+        return node.degree() === k;
+    }).length;
 
-// console.log("modularity", modularity);
+    return n_k;
+};
+
+const plotDegreeDistribution = (cy) => {
+    const minNodeDegree = cy.nodes().minDegree();
+    const maxNodeDegree = cy.nodes().maxDegree();
+
+    const data = [];
+    for (let k = minNodeDegree; k <= maxNodeDegree; k++) {
+        const n_k = degreeDistributionFn(cy, k);
+        data.push({ x: k, y: n_k });
+    }
+
+    return data;
+};
+
+const bGroupDegreeDistDataset = {
+    label: '"B" Group',
+    data: plotDegreeDistribution(cy),
+    borderWidth: 1,
+    backgroundColor: "#4bc0c0",
+    // backgroundColor: "#ff6384",
+};
+
+const chartData = {
+    datasets: [bGroupDegreeDistDataset],
+};
+Chart.defaults.color = "#c4c4c4";
+Chart.defaults.borderColor = "#666";
+
+const chart = new Chart(document.getElementById("chart-canvas"), {
+    type: "scatter",
+    data: chartData,
+    options: {
+        plugins: {
+            title: {
+                display: true,
+                text: "Degree distribution",
+            },
+        },
+        responsive: true,
+        scales: {
+            x: {
+                stacked: true,
+                title: {
+                    text: "k",
+                    display: true,
+                    align: "start",
+                },
+            },
+            y: {
+                stacked: true,
+                title: {
+                    text: "P(k)",
+                    display: true,
+                    align: "start",
+                },
+            },
+        },
+    },
+});
+
+const layout1 = cy.makeLayout({ name: "fcose", animate: false });
+const layout2 = cy.makeLayout({ name: "spread", prelayout: false, animate: false });
+
+const run = (l) => {
+    const p = l.promiseOn("layoutstop");
+
+    l.run();
+
+    return p;
+};
+// Promise.resolve()
+//     .then(() => {
+//         return run(layout1);
+//     })
+//     .then(() => {
+//         return run(layout2);
+//     })
+//     .then(() => {
+//         console.log("Clustering...");
+//         const ccn = cy.elements().closenessCentralityNormalized();
+//         cy.nodes().forEach((n) => {
+//             n.data({
+//                 closeness: ccn.closeness(n),
+//             });
+//         });
+
+//         let clusters = cy.elements().kMeans({
+//             k: 50,
+//             attributes: [(node) => node.data("closeness")],
+//         });
+//         // Filter out empty collections
+//         clusters = clusters.filter((cluster) => cluster.size() >= 3);
+//         console.log("clusters", clusters);
+
+//         // Рассчитайте модулярность графа
+//         const nodes = cy.nodes().map((node) => node.data("id"));
+//         const edges = cy.edges().map((edge) => ({
+//             source: edge.data("source"),
+//             target: edge.data("target"),
+//             // weight: edge.source().data("closeness"),
+//             weight: edge.source().degree(),
+//         }));
+
+//         console.log("nodes", nodes);
+//         console.log("edges", edges);
+
+//         // https://stackoverflow.com/a/49898854
+//         const community = jLouvain().nodes(nodes).edges(edges)();
+//         console.log("community", community);
+//         const { communities, modularity } = community;
+
+//         console.log("modularity", modularity);
+
+//         // Assign random colors to each community
+//         Object.entries(communities).forEach(([nodeId, communityId]) => {
+//             const communityColor = colorArray[communityId % colorArray.length];
+//             const node = cy.nodes(`[id="${nodeId}"]`);
+//             if (node.degree() > 1) {
+//                 node.style("background-color", communityColor);
+//             }
+//         });
+
+//         const mainEdges = cy.edges().filter((edge) => {
+//             return edge.target().data("closeness") > 0.85 || edge.target().data("degree ") > 140;
+//         });
+//         mainEdges.addClass("marked");
+//         // console.log("mainEdges", mainEdges.length, mainEdges);
+//     })
+//     .then(() => {
+//         console.log("done!");
+//     });
