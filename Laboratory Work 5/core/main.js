@@ -295,10 +295,10 @@ const cy = cytoscape({
         },
     ],
     elements: {
-        // nodes: [...aGroupNodes],
-        // edges: aGroupEdges,
-        nodes: [...bGroupNodes],
-        edges: bGroupEdges,
+        nodes: [...aGroupNodes],
+        edges: aGroupEdges,
+        // nodes: [...bGroupNodes],
+        // edges: bGroupEdges,
     },
 });
 
@@ -402,6 +402,52 @@ const calcClusterCoefficient = (cy) => {
 
 const avgClusterCoef = calcClusterCoefficient(cy);
 console.log("avgClusterCoef", avgClusterCoef);
+
+// const ss1 = cy.elements().componentsOf(cy.nodes()[0]);
+// const ss2 = cy.nodes("[id = 'b17339856']")[0].component();
+// console.log("ss1", ss1.length, ss1.nodes());
+// console.log("ss2", ss2.length, ss2.nodes());
+// const ss = cy.elements().componentsOf(cy.nodes("[id = 'b17339856']")[0]);
+// console.log("ss", ss[0].length, ss);
+
+// const getComponentOf = (cy, node) => {
+//     const allComponents = cy.elements().components();
+//     console.log("node", node);
+//     console.log(`[id = '${node.data("id")}']`);
+//     const component = allComponents.filter(
+//         (comp) => comp.nodes(`[id = '${node.data("id")}']`).length !== 0
+//     );
+//     return component[0] ?? [];
+// };
+// console.log("vv", getComponentOf(cy, cy.nodes("[id = 'b43737716']")[0]));
+// const ss1 = cy.nodes("[id = 'b43737716']")[0].component().nodes();
+// console.log("ss", ss1);
+
+const calcAvgPathLength = (cy) => {
+    const nodes = cy.nodes();
+
+    console.time("t");
+    console.log("Calculating avg path length...");
+    const floydWarshall = cy.elements().floydWarshall();
+    const pathLenghts = nodes
+        .map((rootNode) => {
+            const rootNodeComponent = rootNode.component().nodes();
+            const rootPathLenghts = rootNodeComponent.nodes().map((goalNode) => {
+                return floydWarshall.distance(rootNode, goalNode);
+            });
+            return rootPathLenghts;
+        })
+        .flat();
+    console.timeEnd("t");
+
+    const pathLengthSum = pathLenghts.reduce((acc, num) => acc + num, 0);
+    const avgPathLength = pathLengthSum / (nodes.length * (nodes.length - 1));
+
+    return avgPathLength;
+};
+
+const avgPathLength = calcAvgPathLength(cy);
+console.log("avgPathLength", avgPathLength);
 
 const makeFancyLayout = false;
 
