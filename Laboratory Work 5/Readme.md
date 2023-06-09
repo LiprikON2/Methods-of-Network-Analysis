@@ -9,24 +9,26 @@
 
 [Полезные материалы](http://leonidzhukov.net/hse/2014/socialnetworks/)
 
-## Из Лабораторной работы 1
+## Сообщества
 
-#### "A" group
+#### "A" group (subset 5000)
 Group ID: ij_salt
 
 Owner ID: -204380239
 
 ![](https://i.imgur.com/OMgukiH.png)
 
+![](https://i.imgur.com/iGdiUBd.jpeg)
 
-#### "B" group
+
+#### "B" group (subset 1600)
 Group ID: itmem
 
 Owner ID: -127149194
 
 ![](https://i.imgur.com/86oXhVa.png)
 
-
+![](https://i.imgur.com/56VhZ8V.png)
 
 ## 1. Постройте функции распределения степеней узлов для обоих сообществ
 > На какую из известных вам функций похожа каждая из них? В отчёте отразите формулу, график.
@@ -37,9 +39,54 @@ Owner ID: -127149194
 
 $\displaystyle P(k)=\frac{n_k}{n}$
 
+Для "A" группы:
+
+![](https://i.imgur.com/4ZM9gBH.png)
+
+Для "B" группы:
+
+![](https://i.imgur.com/9OFT9X2.png)
+
+В обоих случаях функции напоминают $\displaystyle y=\frac{1}{x}$
+
+Релевантный сниппет
+
+![](https://i.imgur.com/a4JJmHm.png)
+
+### Reference
+- [Распределение степеней](https://ru.wikipedia.org/wiki/%D0%A0%D0%B0%D1%81%D0%BF%D1%80%D0%B5%D0%B4%D0%B5%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5_%D1%81%D1%82%D0%B5%D0%BF%D0%B5%D0%BD%D0%B5%D0%B9?useskin=vector)
+
 ## 2. Вычислите кластерные коэффициенты обоих сообществ
 > **Кластерный коэффициент** (локальная плотность) ― вероятность того, что два соседа в графе связаны между собой
->
+
+По формуле $\displaystyle C_i = \frac{2n_i}{k_i(k_i - 1)}$, где
+
+$i$ ― нода
+
+$k_i$ ― соседи ноды
+
+$n_{i}$ ― число связей между соседями ноды
+
+считаем для всех нод, и берем среднее. 
+
+В итоге:
+
+Для "A" группы:
+
+![](https://i.imgur.com/4betFh9.png)
+
+
+Для "B" группы:
+
+![](https://i.imgur.com/OXhfLiY.png)
+
+
+Релевантный сниппет
+
+![](https://i.imgur.com/YTnatuK.png)
+
+### Reference
+- [Кластерный коэффициент](https://ru.wikipedia.org/wiki/%D0%9A%D0%BE%D0%BC%D0%BF%D0%BB%D0%B5%D0%BA%D1%81%D0%BD%D1%8B%D0%B5_%D1%81%D0%B5%D1%82%D0%B8?useskin=vector#%D0%9A%D0%BB%D0%B0%D1%81%D1%82%D0%B5%D1%80%D0%BD%D1%8B%D0%B9_%D0%BA%D0%BE%D1%8D%D1%84%D1%84%D0%B8%D1%86%D0%B8%D0%B5%D0%BD%D1%82)
 
 
 ## 3. Вычислите среднюю длину пути обоих графов

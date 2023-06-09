@@ -295,10 +295,10 @@ const cy = cytoscape({
         },
     ],
     elements: {
-        nodes: [...aGroupNodes],
-        edges: aGroupEdges,
-        // nodes: [...bGroupNodes],
-        // edges: bGroupEdges,
+        // nodes: [...aGroupNodes],
+        // edges: aGroupEdges,
+        nodes: [...bGroupNodes],
+        edges: bGroupEdges,
     },
 });
 
@@ -333,7 +333,7 @@ const plotDegreeDistribution = (cy) => {
     return data;
 };
 
-const bGroupDegreeDistDataset = {
+const groupDegreeDistDataset = {
     label: '"B" Group',
     data: plotDegreeDistribution(cy),
     borderWidth: 1,
@@ -342,7 +342,7 @@ const bGroupDegreeDistDataset = {
 };
 
 const chartData = {
-    datasets: [bGroupDegreeDistDataset],
+    datasets: [groupDegreeDistDataset],
 };
 Chart.defaults.color = "#c4c4c4";
 Chart.defaults.borderColor = "#666";
@@ -379,74 +379,104 @@ const chart = new Chart(document.getElementById("chart-canvas"), {
     },
 });
 
-const layout1 = cy.makeLayout({ name: "fcose", animate: false });
-const layout2 = cy.makeLayout({ name: "spread", prelayout: false, animate: false });
+const clusterCoefficientFn = (node) => {
+    const neighbors = node.neighborhood().nodes();
+    const k_i = neighbors.length;
 
-const run = (l) => {
-    const p = l.promiseOn("layoutstop");
+    if (k_i < 2) {
+        return 0;
+    } else {
+        const edges = node.connectedEdges().intersection(neighbors.connectedEdges());
+        const n_i = edges.length;
 
-    l.run();
-
-    return p;
+        const coef = (2 * n_i) / (k_i * (k_i - 1));
+        return coef;
+    }
 };
-// Promise.resolve()
-//     .then(() => {
-//         return run(layout1);
-//     })
-//     .then(() => {
-//         return run(layout2);
-//     })
-//     .then(() => {
-//         console.log("Clustering...");
-//         const ccn = cy.elements().closenessCentralityNormalized();
-//         cy.nodes().forEach((n) => {
-//             n.data({
-//                 closeness: ccn.closeness(n),
-//             });
-//         });
 
-//         let clusters = cy.elements().kMeans({
-//             k: 50,
-//             attributes: [(node) => node.data("closeness")],
-//         });
-//         // Filter out empty collections
-//         clusters = clusters.filter((cluster) => cluster.size() >= 3);
-//         console.log("clusters", clusters);
+const calcClusterCoefficient = (cy) => {
+    const clusterCoefs = cy.nodes().map(clusterCoefficientFn);
+    const avgClusterCoef = clusterCoefs.reduce((acc, num) => acc + num, 0) / clusterCoefs.length;
+    return avgClusterCoef;
+};
 
-//         // Рассчитайте модулярность графа
-//         const nodes = cy.nodes().map((node) => node.data("id"));
-//         const edges = cy.edges().map((edge) => ({
-//             source: edge.data("source"),
-//             target: edge.data("target"),
-//             // weight: edge.source().data("closeness"),
-//             weight: edge.source().degree(),
-//         }));
+const avgClusterCoef = calcClusterCoefficient(cy);
+console.log("avgClusterCoef", avgClusterCoef);
 
-//         console.log("nodes", nodes);
-//         console.log("edges", edges);
+const makeFancyLayout = false;
 
-//         // https://stackoverflow.com/a/49898854
-//         const community = jLouvain().nodes(nodes).edges(edges)();
-//         console.log("community", community);
-//         const { communities, modularity } = community;
+if (makeFancyLayout) {
+    const layout1 = cy.makeLayout({ name: "fcose", animate: false });
+    const layout2 = cy.makeLayout({ name: "spread", prelayout: false, animate: false });
 
-//         console.log("modularity", modularity);
+    const run = (l) => {
+        const p = l.promiseOn("layoutstop");
 
-//         // Assign random colors to each community
-//         Object.entries(communities).forEach(([nodeId, communityId]) => {
-//             const communityColor = colorArray[communityId % colorArray.length];
-//             const node = cy.nodes(`[id="${nodeId}"]`);
-//             if (node.degree() > 1) {
-//                 node.style("background-color", communityColor);
-//             }
-//         });
+        l.run();
 
-//         const mainEdges = cy.edges().filter((edge) => {
-//             return edge.target().data("closeness") > 0.85 || edge.target().data("degree ") > 140;
-//         });
-//         mainEdges.addClass("marked");
-//         // console.log("mainEdges", mainEdges.length, mainEdges);
-//     })
-//     .then(() => {
-//         console.log("done!");
-//     });
+        return p;
+    };
+    Promise.resolve()
+        .then(() => {
+            return run(layout1);
+        })
+        .then(() => {
+            return run(layout2);
+        })
+        .then(() => {
+            console.log("Clustering...");
+            const ccn = cy.elements().closenessCentralityNormalized();
+            cy.nodes().forEach((n) => {
+                n.data({
+                    closeness: ccn.closeness(n),
+                });
+            });
+
+            let clusters = cy.elements().kMeans({
+                k: 50,
+                attributes: [(node) => node.data("closeness")],
+            });
+            // Filter out empty collections
+            clusters = clusters.filter((cluster) => cluster.size() >= 3);
+            console.log("clusters", clusters);
+
+            // Рассчитайте модулярность графа
+            const nodes = cy.nodes().map((node) => node.data("id"));
+            const edges = cy.edges().map((edge) => ({
+                source: edge.data("source"),
+                target: edge.data("target"),
+                // weight: edge.source().data("closeness"),
+                weight: edge.source().degree(),
+            }));
+
+            console.log("nodes", nodes);
+            console.log("edges", edges);
+
+            // https://stackoverflow.com/a/49898854
+            const community = jLouvain().nodes(nodes).edges(edges)();
+            console.log("community", community);
+            const { communities, modularity } = community;
+
+            console.log("modularity", modularity);
+
+            // Assign random colors to each community
+            Object.entries(communities).forEach(([nodeId, communityId]) => {
+                const communityColor = colorArray[communityId % colorArray.length];
+                const node = cy.nodes(`[id="${nodeId}"]`);
+                if (node.degree() > 1) {
+                    node.style("background-color", communityColor);
+                }
+            });
+
+            const mainEdges = cy.edges().filter((edge) => {
+                return (
+                    edge.target().data("closeness") > 0.85 || edge.target().data("degree ") > 140
+                );
+            });
+            mainEdges.addClass("marked");
+            // console.log("mainEdges", mainEdges.length, mainEdges);
+        })
+        .then(() => {
+            console.log("done!");
+        });
+}
