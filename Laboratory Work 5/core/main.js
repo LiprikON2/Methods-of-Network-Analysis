@@ -302,6 +302,16 @@ const cy = cytoscape({
     },
 });
 
+const removeUnconnectedNodes = false;
+
+if (removeUnconnectedNodes) {
+    const removed = cy
+        .nodes()
+        .filter((node) => node.degree() === 0)
+        .remove();
+    console.log("removed", removed);
+}
+
 // Рассчитайте максимальное, минимальное и среднее значение степени нодов графа
 const minNodeDegree = cy.nodes().minDegree();
 console.log("minNodeDegree", minNodeDegree);
@@ -403,26 +413,6 @@ const calcClusterCoefficient = (cy) => {
 const avgClusterCoef = calcClusterCoefficient(cy);
 console.log("avgClusterCoef", avgClusterCoef);
 
-// const ss1 = cy.elements().componentsOf(cy.nodes()[0]);
-// const ss2 = cy.nodes("[id = 'b17339856']")[0].component();
-// console.log("ss1", ss1.length, ss1.nodes());
-// console.log("ss2", ss2.length, ss2.nodes());
-// const ss = cy.elements().componentsOf(cy.nodes("[id = 'b17339856']")[0]);
-// console.log("ss", ss[0].length, ss);
-
-// const getComponentOf = (cy, node) => {
-//     const allComponents = cy.elements().components();
-//     console.log("node", node);
-//     console.log(`[id = '${node.data("id")}']`);
-//     const component = allComponents.filter(
-//         (comp) => comp.nodes(`[id = '${node.data("id")}']`).length !== 0
-//     );
-//     return component[0] ?? [];
-// };
-// console.log("vv", getComponentOf(cy, cy.nodes("[id = 'b43737716']")[0]));
-// const ss1 = cy.nodes("[id = 'b43737716']")[0].component().nodes();
-// console.log("ss", ss1);
-
 const calcAvgPathLength = (cy) => {
     const nodes = cy.nodes();
 
@@ -491,8 +481,8 @@ if (makeFancyLayout) {
             const edges = cy.edges().map((edge) => ({
                 source: edge.data("source"),
                 target: edge.data("target"),
-                // weight: edge.source().data("closeness"),
-                weight: edge.source().degree(),
+                weight: edge.source().data("closeness"),
+                // weight: edge.source().degree(),
             }));
 
             console.log("nodes", nodes);
