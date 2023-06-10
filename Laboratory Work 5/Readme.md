@@ -52,7 +52,7 @@ $\displaystyle P(k)=\frac{n_k}{n}$
 - Power law
 - С длинным хвостом
 
-[Релевантный сниппет](./core/main.js#L322)
+[Релевантный сниппет](./core/main.js#L325)
 
 ![](https://i.imgur.com/a4JJmHm.png)
 
@@ -84,7 +84,7 @@ $n_{i}$ ― число связей между соседями ноды
 ![](https://i.imgur.com/OXhfLiY.png)
 
 
-[Релевантный сниппет](./core/main.js#L389)
+[Релевантный сниппет](./core/main.js#L392)
 
 ![](https://i.imgur.com/YTnatuK.png)
 
@@ -114,7 +114,7 @@ $n$ ― количество нод
 
 ![](https://i.imgur.com/H1aiXdl.png)
 
-[Релевантный сниппет](./core/main.js#L413)
+[Релевантный сниппет](./core/main.js#L416)
 
 ![](https://i.imgur.com/37ugT22.png)
 
