@@ -1,6 +1,7 @@
 # Методы сетевого анализа
 > K33401 - Рейнгеверц Вадим
-> 
+
+[![wakatime](https://wakatime.com/badge/github/LiprikON2/Methods-of-Network-Analysis.svg)](https://wakatime.com/badge/github/LiprikON2/Methods-of-Network-Analysis)
 
 
 ### Laboratory Works
